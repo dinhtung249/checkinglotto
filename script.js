@@ -1,11 +1,12 @@
 let lottoData = [];
 
-// Tải dữ liệu từ JSON
 fetch('lotto_data.json')
   .then(response => response.json())
   .then(data => {
-    lottoData = data;
-  });
+    console.log("Dữ liệu đã load:", data); // <-- Thêm dòng này để kiểm tra
+    // xử lý tiếp
+  })
+  .catch(error => console.error("Lỗi khi load JSON:", error));
 
 function checkNumbers() {
   const input = document.getElementById("numbersInput").value;
