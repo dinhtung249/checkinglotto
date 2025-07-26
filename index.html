@@ -1,17 +1,58 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Lotto 5/35 Checker</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <title>Check Lotto JSONL</title>
 </head>
 <body>
-  <h2>Kiểm tra bộ số Lotto</h2>
-  <input id="numbersInput" type="text" placeholder="Nhập 5 số, ví dụ: 5,12,23,30,35">
-  <button onclick="checkNumbers()">Kiểm tra</button>
-  <p id="result"></p>
+  <h2>Nhập 5 số (cách nhau bởi dấu phẩy):</h2>
+  <input type="text" id="numberInput" placeholder="VD: 2, 5, 15, 30, 35" />
+  <button onclick="check()">Kiểm tra</button>
+  <div id="result"></div>
 
-  <script src="script.js"></script>
+  <script>
+    function parseUserInput(input) {
+      return input
+        .split(',')
+        .map(s => parseInt(s.trim()))
+        .filter(n => !isNaN(n));
+    }
+
+    function checkMatching(userNumbers, resultNumbers) {
+      return userNumbers.filter(n => resultNumbers.includes(n));
+    }
+
+    function check() {
+      const input = document.getElementById("numberInput").value;
+      const userNumbers = parseUserInput(input);
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = '';
+
+      fetch('lotto_data.json')
+        .then(response => response.text())
+        .then(text => {
+          const lines = text.trim().split('\n');
+          const data = lines.map(line => JSON.parse(line));
+          let found = false;
+
+          data.forEach((entry, index) => {
+            const matched = checkMatching(userNumbers, entry.numbers);
+            if (matched.length >= 3) {
+              found = true;
+              const p = document.createElement("p");
+              p.textContent = `✅ Trùng ${matched.length} số ở dòng ${index + 1}: ${matched.join(', ')}`;
+              resultDiv.appendChild(p);
+            }
+          });
+
+          if (!found) {
+            resultDiv.innerHTML = '❌ Không trùng ít nhất 3 số ở bất kỳ dòng nào.';
+          }
+        })
+        .catch(error => {
+          resultDiv.innerHTML = '❌ Lỗi đọc JSONL: ' + error;
+        });
+    }
+  </script>
 </body>
 </html>
