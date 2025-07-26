@@ -2,55 +2,70 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <title>Check Lotto JSONL</title>
+  <title>Kiểm tra trùng 5 số</title>
 </head>
 <body>
-  <h2>Nhập 5 số (cách nhau bởi dấu phẩy):</h2>
-  <input type="text" id="numberInput" placeholder="VD: 2, 5, 15, 30, 35" />
+  <h2>Nhập 5 số (cách nhau bằng dấu phẩy):</h2>
+  <input type="text" id="numberInput" placeholder="VD: 2, 5, 7, 15, 29" />
   <button onclick="check()">Kiểm tra</button>
-  <div id="result"></div>
+
+  <p id="result"></p>
 
   <script>
     function parseUserInput(input) {
-      return input
+      const numbers = input
         .split(',')
         .map(s => parseInt(s.trim()))
         .filter(n => !isNaN(n));
+
+      if (numbers.length !== 5) {
+        alert("Bạn phải nhập đúng 5 số!");
+        return null;
+      }
+
+      // Sắp xếp để so sánh dễ hơn
+      return numbers.sort((a, b) => a - b);
     }
 
-    function checkMatching(userNumbers, resultNumbers) {
-      return userNumbers.filter(n => resultNumbers.includes(n));
+    function arraysEqual(arr1, arr2) {
+      if (arr1.length !== arr2.length) return false;
+      for (let i = 0; i < arr1.length; i++) {
+        if (arr1[i] !== arr2[i]) return false;
+      }
+      return true;
     }
 
     function check() {
       const input = document.getElementById("numberInput").value;
       const userNumbers = parseUserInput(input);
       const resultDiv = document.getElementById("result");
-      resultDiv.innerHTML = '';
+      resultDiv.innerText = "";
+
+      if (!userNumbers) return;
 
       fetch('lotto_data.json')
         .then(response => response.text())
         .then(text => {
           const lines = text.trim().split('\n');
-          const data = lines.map(line => JSON.parse(line));
-          let found = false;
+          let matchedLine = null;
 
-          data.forEach((entry, index) => {
-            const matched = checkMatching(userNumbers, entry.numbers);
-            if (matched.length >= 3) {
-              found = true;
-              const p = document.createElement("p");
-              p.textContent = `✅ Trùng ${matched.length} số ở dòng ${index + 1}: ${matched.join(', ')}`;
-              resultDiv.appendChild(p);
+          for (let i = 0; i < lines.length; i++) {
+            const entry = JSON.parse(lines[i]);
+            const entryNumbers = entry.numbers.sort((a, b) => a - b);
+            if (arraysEqual(userNumbers, entryNumbers)) {
+              matchedLine = i + 1;
+              break;
             }
-          });
+          }
 
-          if (!found) {
-            resultDiv.innerHTML = '❌ Không trùng ít nhất 3 số ở bất kỳ dòng nào.';
+          if (matchedLine) {
+            resultDiv.innerText = `✅ Trùng đúng 5 số ở dòng ${matchedLine} trong cơ sở dữ liệu!`;
+          } else {
+            resultDiv.innerText = "❌ Không trùng đúng bộ số nào trong dữ liệu";
           }
         })
         .catch(error => {
-          resultDiv.innerHTML = '❌ Lỗi đọc JSONL: ' + error;
+          resultDiv.innerText = "❌ Lỗi đọc JSONL: " + error;
         });
     }
   </script>
